@@ -1,0 +1,26 @@
+{
+  "name": "oddsrelay-zapier",
+  "version": "1.0.0",
+  "description": "OddsRelay for Zapier: new events and board rows as triggers, and searches for boards, event odds, coverage and your token balance.",
+  "private": true,
+  "license": "MIT",
+  "author": "OddsRelay <hello@oddsrelay.io> (https://oddsrelay.io)",
+  "homepage": "https://oddsrelay.io",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oddsrelay/oddsrelay-zapier.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oddsrelay/oddsrelay-zapier/issues"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test \"test/*.test.js\""
+  },
+  "dependencies": {
+    "zapier-platform-core": "19.2.0"
+  },
+  "devDependencies": {
+    "nock": "14.0.17"
+  }
+}
