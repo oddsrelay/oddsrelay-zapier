@@ -130,7 +130,37 @@ test('New Event walks the pages, drops repeats and other boards, latest kick-off
   assert.deepEqual(standard.map((e) => e.id), ['or_evt_later']);
 });
 
+test('New Event reads each_way, extra_place and two_up as the feed types', async () => {
+  const page = fixture('events');
+  const racing = { ...page.data[0], id: 'or_evt_race', has_coverage: ['bog', 'each_way', 'extra_place'] };
+  const match = { ...page.data[1], id: 'or_evt_match', has_coverage: ['standard', 'two_up'] };
+  const reply = { ...page, meta: { ...page.meta, next_cursor: null }, data: [racing, match] };
+  for (const [feedType, ids] of [['each-way', ['or_evt_race']], ['extra-place', ['or_evt_race']], ['2up', ['or_evt_match']]]) {
+    api().get('/v2/events').query({ sport: 'tennis' }).reply(200, reply);
+    const found = await appTester(App.triggers.new_event.operation.perform, {
+      authData,
+      inputData: { sport: 'tennis', feed_type: feedType },
+    });
+    assert.deepEqual(found.map((e) => e.id), ids, feedType);
+  }
+  api().get('/v2/events').query({ sport: 'tennis' }).reply(200, reply);
+  const all = await appTester(App.triggers.new_event.operation.perform, { authData, inputData: { sport: 'tennis' } });
+  assert.deepEqual(all.map((e) => e.feed_types).sort(), [
+    'Best odds guaranteed (BOG), Each-way, Extra place',
+    'Standard, 2Up',
+  ]);
+});
+
 const boardInput = { feed_type: 'standard', sports: ['tennis'], bookmakers: ['william_hill'], exchanges: [], max_tokens: 100 };
+// The venues fixture, plus the venues the board fixtures name (kwiff is left out: an unknown key stands in as its name).
+const venues = () => {
+  const body = fixture('bookmakers');
+  const extra = [
+    { key: 'william_hill', name: 'William Hill', regions: ['uk'], is_exchange: false },
+    { key: 'betfair_exchange', name: 'Betfair Exchange', regions: ['uk'], is_exchange: true },
+  ];
+  return { ...body, data: [...body.data, ...extra] };
+};
 
 test('New Board Row prices the board first, then turns it into one row per bookmaker price', async () => {
   api()
@@ -138,6 +168,7 @@ test('New Board Row prices the board first, then turns it into one row per bookm
     .query({ sports: 'tennis', bookmakers: 'william_hill', quote: 'true' })
     .reply(200, { ...fixture('quote'), cost: 12 });
   api().get('/v2/odds/standard').query({ sports: 'tennis', bookmakers: 'william_hill' }).reply(200, fixture('odds-standard'));
+  api().get('/v2/bookmakers').reply(200, venues());
 
   const rows = await appTester(App.triggers.new_board_row.operation.perform, { authData, inputData: boardInput });
   assert.equal(rows.length, 1);
@@ -154,12 +185,14 @@ test('New Board Row stops before spending when the quote is above the limit', as
   );
   assert.equal(err.code, 'over_token_limit');
   assert.match(err.message, /cost 540 tokens, above your limit of 100/);
+  assert.match(err.message, /"Most tokens per run" to at least 540/);
 });
 
 test('each-way rows carry the place terms and both lays; dutching rows carry the dutch group', async () => {
   for (const [type, file] of [['each-way', 'odds-each-way'], ['dutching', 'odds-dutching']]) {
     api().get(`/v2/odds/${type}`).query({ quote: 'true' }).reply(200, fixture('quote'));
     api().get(`/v2/odds/${type}`).reply(200, fixture(file));
+    api().get('/v2/bookmakers').reply(200, venues());
   }
   const ew = await appTester(App.triggers.new_board_row.operation.perform, {
     authData,
@@ -171,6 +204,8 @@ test('each-way rows carry the place terms and both lays; dutching rows carry the
   assert.equal(ew[0].lay_price, 3.25);
   assert.equal(ew[0].place_lay_price, 2.16);
   assert.equal(ew[0].place_lay_places, 3);
+  assert.equal(ew[0].bookmaker_name, 'kwiff', 'a venue missing from the list keeps its key as its name');
+  assert.equal(ew[0].lay_exchange_name, 'Betfair Exchange');
 
   const dutch = await appTester(App.triggers.new_board_row.operation.perform, {
     authData,
@@ -187,6 +222,7 @@ test('each-way rows carry the place terms and both lays; dutching rows carry the
 test('Find Board returns the board as line items, cut to the row limit', async () => {
   api().get('/v2/odds/each-way').query({ quote: 'true' }).reply(200, fixture('quote'));
   api().get('/v2/odds/each-way').reply(200, fixture('odds-each-way'));
+  api().get('/v2/bookmakers').reply(200, venues());
   const [board] = await appTester(App.searches.find_board.operation.perform, {
     authData,
     inputData: { feed_type: 'each-way', max_tokens: 10, limit: 1 },
@@ -197,6 +233,7 @@ test('Find Board returns the board as line items, cut to the row limit', async (
 
   api().get('/v2/odds/bog').query({ quote: 'true' }).reply(200, fixture('quote'));
   api().get('/v2/odds/bog').reply(200, { meta: fixture('odds-standard').meta, data: [] });
+  api().get('/v2/bookmakers').reply(200, venues());
   const none = await appTester(App.searches.find_board.operation.perform, {
     authData,
     inputData: { feed_type: 'bog', max_tokens: 10 },

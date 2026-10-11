@@ -1,6 +1,6 @@
 'use strict';
 
-const { boardFilters, maxTokens } = require('../lib/fields');
+const { feedType, boardFilters, maxTokens } = require('../lib/fields');
 const { readBoard, rowFields, sample } = require('../lib/board');
 
 const perform = async (z, bundle) => {
@@ -27,8 +27,9 @@ module.exports = {
   },
   operation: {
     inputFields: [
-      ...boardFilters,
+      feedType(),
       maxTokens(100),
+      ...boardFilters,
       {
         key: 'limit',
         label: 'Most rows',

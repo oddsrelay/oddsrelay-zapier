@@ -1,6 +1,6 @@
 'use strict';
 
-const { FEED_TYPES, get, eventName, latestFirst } = require('../lib/oddsrelay');
+const { FEED_TYPES, boardKey, get, eventName, latestFirst } = require('../lib/oddsrelay');
 const { sportChoices, feedTypeChoices } = require('../lib/fields');
 
 // ponytail: reads at most 4 pages (1,000 events) per check; a sport with more upcoming events needs a narrower pick.
@@ -18,7 +18,8 @@ const perform = async (z, bundle) => {
     if (!cursor) break;
   }
   return [...events.values()]
-    .filter((e) => e.status === 'upcoming' && (!feedType || (e.has_coverage || []).includes(feedType)))
+    .map((e) => ({ ...e, boards: (e.has_coverage || []).map(boardKey) }))
+    .filter((e) => e.status === 'upcoming' && (!feedType || e.boards.includes(feedType)))
     .map((e) => ({
       id: e.id,
       name: eventName(e),
@@ -27,7 +28,7 @@ const perform = async (z, bundle) => {
       commence_time: e.commence_time ?? null,
       home_team: e.home_team ?? null,
       away_team: e.away_team ?? null,
-      feed_types: (e.has_coverage || []).map((t) => FEED_TYPES[t] || t).join(', '),
+      feed_types: e.boards.map((t) => FEED_TYPES[t] || t).join(', '),
     }))
     .sort(latestFirst);
 };

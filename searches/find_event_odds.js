@@ -88,6 +88,7 @@ module.exports = {
         helpText: 'Needs an API key whose plan includes raw odds.',
         choices: { perform: eventChoices },
       },
+      maxTokens(25),
       {
         key: 'bookmakers',
         label: 'Bookmakers and exchanges',
@@ -102,7 +103,6 @@ module.exports = {
         helpText: 'Market keys such as h2h. Leave empty for every market.',
         choices: { perform: marketChoices },
       },
-      maxTokens(25),
     ],
     perform,
     sample: {

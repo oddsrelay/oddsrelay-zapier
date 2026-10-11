@@ -20,7 +20,7 @@ against your usage record, which costs no tokens, and names the connection after
 | Trigger | Starts a Zap when | Tokens |
 |---|---|---|
 | New Event | a new upcoming event is listed in the sport or competition you choose, optionally only on one feed type | none |
-| New Board Row | a new row appears on the matched board you choose: one event, market, selection and bookmaker price, beside the lowest exchange lay price | each check is priced first and capped |
+| New Board Row | a new row appears on the matched board you choose: one event, market, selection and bookmaker price, beside the lowest exchange lay price, with each venue's key and name | each check is priced first and capped |
 
 ## Searches
 
@@ -41,15 +41,20 @@ first (a quote, which is free). When the price is above the step's **Most tokens
 nothing is spent, and the run stops with an error that says what it would have cost.
 
 A trigger runs on every check: how often Zapier checks for new rows depends on your Zapier plan, and each check is
-priced on its own. Pick a sport or competition and a few bookmakers to keep each check small. How a
-request is priced: https://oddsrelay.io/docs/guides/filters-and-tokens
+priced on its own. Pick a sport or competition and a few bookmakers to keep each check small: on some boards that
+lowers the price, and the error says what the limit would need to be. How a request is priced:
+https://oddsrelay.io/docs/guides/filters-and-tokens
+
+Each check of New Event reads up to 1,000 events and each check of New Board Row up to 2,500 rows, latest kick-off
+first, and only ids Zapier has not seen before start the Zap. When more than 100 new items arrive in one check,
+Zapier's flood protection holds the runs until you confirm them; the limit is in the Zap's settings.
 
 ## Errors
 
 | You see | What it means |
 |---|---|
 | Your OddsRelay API key was not accepted | The key is wrong, revoked or expired. Copy it again from the Keys page and reconnect |
-| This request would cost N tokens, above your limit | The quote was above **Most tokens per run**. Narrow the filters or raise the limit |
+| This request would cost N tokens, above your limit | The quote was above **Most tokens per run**. Raise the limit to at least N, or narrow the filters where the board's price depends on them |
 | The API's message about tokens, then "Nothing was spent" | The account has too few tokens left for the request (HTTP 402) |
 | OddsRelay is limiting requests from this key for a moment | Too many requests in a short time (HTTP 429). Zapier tries again after the wait the API asks for |
 | A message naming a sport, bookmaker or market, with the accepted values | A filter value the API does not know |
