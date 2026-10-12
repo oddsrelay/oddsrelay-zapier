@@ -2,7 +2,7 @@
 
 const { KEYS_PAGE, get } = require('./lib/oddsrelay');
 
-const PLANS = { free: 'Free', starter: 'Starter', pro: 'Pro', business: 'Business' };
+const PLANS = { free: 'Free', starter: 'Starter', pro: 'Pro', business: 'Max' };
 
 module.exports = {
   type: 'custom',
