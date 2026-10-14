@@ -151,6 +151,64 @@ test('New Event reads each_way, extra_place and two_up as the feed types', async
   ]);
 });
 
+test('New Event lists a fixture once, under a key that outlives its id; the duplicate check reads that key', async () => {
+  const page = fixture('events');
+  const darts = (id, home, away, commence_time) => ({ ...page.data[0], id, home_team: home, away_team: away, commence_time });
+  const data = [
+    // One fixture, three events: two spellings at once, then a new id and kick-off when an exchange lists it.
+    darts('or_evt_b2dcc17cca36', 'Jim McEwan', 'Josh McCarthy', '2026-10-15T12:55:00Z'),
+    darts('or_evt_8130dbbf3605', 'McEwan, Jim', 'McCarthy, Josh', '2026-10-15T13:05:00Z'),
+    darts('or_evt_d064e5173897', 'Jim Mcewan', 'Josh Mccarthy', '2026-10-15T13:05:00Z'),
+    // The same pair on another day is another fixture.
+    darts('or_evt_rematch', 'Jim McEwan', 'Josh McCarthy', '2026-10-22T12:55:00Z'),
+    // Pairs, accents and initials: one fixture.
+    darts('or_evt_pair1', 'S. Kopp/Y. Milev', 'I. Almazán Valiente/P. Lagutin', '2026-10-15T14:00:00Z'),
+    darts('or_evt_pair2', 'Kopp, Sandro/Milev, Yanaki', 'Almazan Valiente, Izan/Lagutin, Pavel', '2026-10-15T14:15:00Z'),
+    // No sides (racing), or sides that reduce to one name: each keeps its id.
+    darts('or_evt_race1', null, null, '2026-10-15T12:02:00Z'),
+    darts('or_evt_race2', null, null, '2026-10-15T12:25:00Z'),
+    darts('or_evt_res1', 'Real Pilar FC (Reserves)', 'CA Villa San Carlos Reserves', '2026-10-15T14:00:00Z'),
+    darts('or_evt_res2', 'CA Boca Juniors (Reserves)', 'Ferro Reserves', '2026-10-15T22:00:00Z'),
+  ];
+  api().get('/v2/events').query({ sport: 'darts' }).reply(200, { ...page, meta: { ...page.meta, next_cursor: null }, data });
+  const found = await appTester(App.triggers.new_event.operation.perform, { authData, inputData: { sport: 'darts' } });
+  assert.deepEqual(
+    found.map((e) => e.fixture_key),
+    [
+      'mcewan|mccarthy|2026-10-22',
+      'or_evt_res2',
+      'kopp+milev|lagutin+valiente|2026-10-15',
+      'or_evt_res1',
+      'mcewan|mccarthy|2026-10-15',
+      'or_evt_race2',
+      'or_evt_race1',
+    ],
+  );
+
+  const primary = App.triggers.new_event.operation.outputFields.filter((f) => f.primary).map((f) => f.key);
+  assert.deepEqual(primary, ['fixture_key']);
+});
+
+test('New Event reads every page, and stops with an error past 10,000 events', async () => {
+  const page = fixture('events');
+  const reply = (i, next) => ({
+    meta: { ...page.meta, next_cursor: next },
+    data: [{ ...page.data[0], id: `or_evt_${i}`, commence_time: `2026-10-${10 + i}T12:00:00Z` }],
+  });
+  for (let i = 0; i < 6; i++) {
+    api().get('/v2/events').query({ sport: 'tennis', ...(i ? { cursor: `c${i}` } : {}) }).reply(200, reply(i, i < 5 ? `c${i + 1}` : null));
+  }
+  const six = await appTester(App.triggers.new_event.operation.perform, { authData, inputData: { sport: 'tennis' } });
+  assert.deepEqual(six.map((e) => e.id), ['or_evt_5', 'or_evt_4', 'or_evt_3', 'or_evt_2', 'or_evt_1', 'or_evt_0']);
+
+  for (let i = 0; i < 40; i++) {
+    api().get('/v2/events').query({ sport: 'soccer', ...(i ? { cursor: `c${i}` } : {}) }).reply(200, reply(0, `c${i + 1}`));
+  }
+  const err = await failure(appTester(App.triggers.new_event.operation.perform, { authData, inputData: { sport: 'soccer' } }));
+  assert.equal(err.code, 'too_many_events');
+  assert.match(err.message, /more than 10,000 upcoming events/);
+});
+
 const boardInput = { feed_type: 'standard', sports: ['tennis'], bookmakers: ['william_hill'], exchanges: [], max_tokens: 100 };
 // The venues fixture, plus the venues the board fixtures name (kwiff is left out: an unknown key stands in as its name).
 const venues = () => {

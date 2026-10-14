@@ -1,6 +1,6 @@
 {
   "name": "oddsrelay-zapier",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "OddsRelay for Zapier: new events and board rows as triggers, and searches for boards, event odds, coverage and your token balance.",
   "private": true,
   "license": "MIT",

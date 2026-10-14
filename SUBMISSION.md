@@ -39,17 +39,21 @@ For any field that asks for more than the one line:
 > free price quote and stops with an error, without spending, when the quote is above the step's "Most tokens per
 > run" field. New Event, Find Coverage, Find Token Balance, the connection test and every dropdown use free routes.
 >
-> Both triggers are polling triggers. New Event uses the event id as its primary key. New Board Row uses a row id
-> built from the event, market, selection, line, bookmaker and dutch group, so a row triggers once however often
-> its price changes. Find Board and Find Event Odds return one record with the rows or prices as line items, for
+> Both triggers are polling triggers. New Event's primary key is its "Fixture key" output field, not the event id:
+> the API can give a fixture a new event id before kick-off (when an exchange lists it) and can list one fixture
+> under two spellings at once, so the key is the two sides' main names and the kick-off day (the event id for
+> racing, which has no sides), and each check returns one record per fixture. New Board Row uses a row id built
+> from the event, market, selection, line, bookmaker and dutch group, so a row triggers once however often its
+> price changes. Find Board and Find Event Odds return one record with the rows or prices as line items, for
 > steps such as "Create Multiple Spreadsheet Rows". A search that finds nothing returns no result rather than an
 > error.
 >
 > The API lists events by kick-off, not by when they were added, and new fixtures usually appear at the far end of
-> the schedule. Both triggers therefore sort latest kick-off first and return more than the usual 100 items (New
-> Event up to 1,000 events, New Board Row up to 2,500 rows) so that a new item further down is not missed;
-> deduplication then triggers only on ids it has not seen. Each board row carries the venue keys and their display
-> names.
+> the schedule. Both triggers therefore sort latest kick-off first and return more than the usual 100 items so that
+> a new item further down is not missed: New Event reads every upcoming event of the chosen sport or competition (a
+> free route; above 10,000 events it stops with an error asking for one competition), New Board Row up to 2,500
+> rows. Deduplication then triggers only on keys it has not seen, so New Event triggers when a fixture is first
+> listed, not as it nears kick-off. Each board row carries the venue keys and their display names.
 >
 > Find Event Odds needs an API key whose plan includes raw odds; the test account's key has every feed type and
 > unlimited tokens.
@@ -101,6 +105,17 @@ least 3 users with live Zaps. These six cover all of them and double as Zap temp
 - A second, independent check from a fresh clone and a clean install: the same results, plus a live run of every
   trigger, search and dropdown, including each matched board through New Board Row and each feed type through New
   Event's filter. Every live row matched its output fields and the sample's keys, and every id was unique.
+
+## Checks run for 1.0.1 (14 Oct 2026)
+
+- The New Event fix was measured on the live events route (12 checks a minute apart, 14 Oct, 21:04 to 21:16 UTC):
+  keyed on the event id, tennis gave about 350 "new" events an hour, nine in ten of them a fixture already listed;
+  keyed on the fixture key, about 75, while the next day's orders of play were being added. Soccer went from about
+  85 to 30 an hour, darts from about 50 to none, ice hockey from 20 to none; racing had no repeats either way.
+- `npm test`: 20 offline tests pass, two of them new: one fixture listed three ways is one record, a new day is a
+  new fixture, racing keeps its id, and the duplicate check reads the fixture key; every page is read, with an error
+  past 10,000 events.
+- `zapier-platform validate` (zapier-platform-cli 19.2.0) and `zapier-platform push` (version 1.0.1).
 
 ## Sources (read 11 Oct 2026)
 

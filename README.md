@@ -45,8 +45,10 @@ priced on its own. Pick a sport or competition and a few bookmakers to keep each
 lowers the price, and the error says what the limit would need to be. How a request is priced:
 https://oddsrelay.io/docs/guides/filters-and-tokens
 
-Each check of New Event reads up to 1,000 events and each check of New Board Row up to 2,500 rows, latest kick-off
-first, and only ids Zapier has not seen before start the Zap. When more than 100 new items arrive in one check,
+Each check of New Event reads every upcoming event of your pick (up to 10,000) and lists each fixture once, and
+only fixtures Zapier has not seen before start the Zap: a fixture is known by its two sides and its kick-off day,
+because its event id can change before kick-off. Each check of New Board Row reads up to 2,500 rows, latest
+kick-off first, and only row ids Zapier has not seen before start the Zap. When more than 100 new items arrive in one check,
 Zapier's flood protection holds the runs until you confirm them; the limit is in the Zap's settings.
 
 ## Errors
