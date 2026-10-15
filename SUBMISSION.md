@@ -39,10 +39,8 @@ For any field that asks for more than the one line:
 > free price quote and stops with an error, without spending, when the quote is above the step's "Most tokens per
 > run" field. New Event, Find Coverage, Find Token Balance, the connection test and every dropdown use free routes.
 >
-> Both triggers are polling triggers. New Event's primary key is its "Fixture key" output field, not the event id:
-> the API can give a fixture a new event id before kick-off (when an exchange lists it) and can list one fixture
-> under two spellings at once, so the key is the two sides' main names and the kick-off day (the event id for
-> racing, which has no sides), and each check returns one record per fixture. New Board Row uses a row id built
+> Both triggers are polling triggers. New Event deduplicates on the event id, which the API never changes for its
+> fixture, and each check returns one record per id. New Board Row uses a row id built
 > from the event, market, selection, line, bookmaker and dutch group, so a row triggers once however often its
 > price changes. Find Board and Find Event Odds return one record with the rows or prices as line items, for
 > steps such as "Create Multiple Spreadsheet Rows". A search that finds nothing returns no result rather than an
@@ -116,6 +114,27 @@ least 3 users with live Zaps. These six cover all of them and double as Zap temp
   new fixture, racing keeps its id, and the duplicate check reads the fixture key; every page is read, with an error
   past 10,000 events.
 - `zapier-platform validate` (zapier-platform-cli 19.2.0) and `zapier-platform push` (version 1.0.1).
+
+## Checks run for 1.0.2 (15 Oct 2026)
+
+- New Event deduplicates on the event id again: since 14 Oct 2026, 23:15 UTC, the API never changes a served id
+  for its fixture and lists each fixture once (OddsRelay decision C287), so 1.0.1's fixture key is gone.
+- `npm test`: 20 offline tests pass; the fixture-key test is replaced by one record per id, two ids stay two
+  records, and no output field is primary, so Zapier's duplicate check reads `id`.
+- `zapier-platform validate` (zapier-platform-cli 19.2.0): structurally sound; 27 checks passed, none failed, one
+  general warning (zapier-platform-core 19.2.1 is out, D027).
+
+## Releasing 1.0.2 (only on Oscar's word)
+
+On 15 Oct every Zap was still on 1.0.0 (1 Zap user), and 1.0.1 had 0 users. 1.0.0 and 1.0.2 both deduplicate on
+the id; 1.0.1 used the fixture key. A Zap whose duplicate key changes sees every event as new, so:
+
+1. `zapier-platform push` (uploads 1.0.2, private).
+2. In Zapier, turn each New Event Zap OFF (Zap 1, tennis; Zap 4, darts).
+3. `zapier-platform migrate 1.0.0 1.0.2` (and `migrate 1.0.1 1.0.2` if any Zap moved to 1.0.1 since).
+4. Turn each New Event Zap back ON: Zapier takes a fresh sample and counts what is listed now as seen.
+5. Zap 1 (tennis, every competition) still sees roughly 500 to 1,000 genuinely new matches a day, each one a run:
+   point it at one competition, or turn it on only long enough for one successful run.
 
 ## Sources (read 11 Oct 2026)
 

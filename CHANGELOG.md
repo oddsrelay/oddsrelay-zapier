@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2 (unreleased)
+
+- New Event's duplicate check reads the event id again, and the "Fixture key" field is gone. Since 14 Oct 2026 an
+  event's id never changes for its fixture and the API lists each fixture once, so the id names a fixture better than
+  its sides and kick-off day did. Each check returns one record per id.
+
 ## 1.0.1 (unreleased)
 
 - New Event triggers once per fixture, when it is first listed. It used to trigger again when the API gave a fixture
