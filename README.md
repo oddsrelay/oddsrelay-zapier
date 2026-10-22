@@ -1,7 +1,7 @@
 # OddsRelay for Zapier
 
-The OddsRelay integration for Zapier: pre-match odds for UK and Irish bookmakers, with Betfair, Smarkets,
-Matchbook and BETDAQ lay prices, in your Zaps. Start a Zap when a new event is listed or a new row appears on a
+The OddsRelay integration for Zapier: pre-match odds for UK and Irish bookmakers, with Betfair, Smarkets and
+Matchbook lay prices, in your Zaps. Start a Zap when a new event is listed or a new row appears on a
 matched board, and look up a board, one event's prices, coverage or your token balance as a step.
 
 API docs: https://oddsrelay.io/docs
