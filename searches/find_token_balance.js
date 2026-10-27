@@ -9,7 +9,7 @@ const perform = async (z, bundle) => {
   const number = (v) => (typeof v === 'number' ? v : null);
   const needed = Number(bundle.inputData.tokens_needed) || 0;
   const remaining = number(t.remaining);
-  const names = { ...FEED_TYPES, ...RAW };
+  const names = { ...FEED_TYPES, ...RAW, historical: 'Historical odds' };
   return [
     {
       id: usage.key?.id ?? null,
@@ -54,7 +54,7 @@ module.exports = {
       tokens_limit: 50000,
       resets_at: '2026-10-16T21:02:31Z',
       has_enough: true,
-      feed_types: 'Standard, Each-way, Extra place, Best odds guaranteed (BOG), Dutching, 2Up, Raw odds',
+      feed_types: 'Standard, Each-way, Extra place, Best odds guaranteed (BOG), Dutching, 2Up, Raw odds, Historical odds',
       regions: 'uk',
     },
     outputFields: [
