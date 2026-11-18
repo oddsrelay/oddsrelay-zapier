@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 (2026-11-18)
 
 - Regions: New Event, Find Event Odds and Find Coverage take an optional Region (the regions the key can ask for),
   and their sport, event, bookmaker and market lists follow it. It sits first in those steps, above the required
@@ -9,13 +9,13 @@
   only, and an account whose home region is another one is refused when no region is sent.
 - README and listing texts no longer say "pre-match" or UK only. No raw board step and no in-play field yet.
 
-## 1.0.2 (unreleased)
+## 1.0.2 (2026-10-15)
 
 - New Event's duplicate check reads the event id again, and the "Fixture key" field is gone. Since 14 Oct 2026 an
   event's id never changes for its fixture and the API lists each fixture once, so the id names a fixture better than
   its sides and kick-off day did. Each check returns one record per id.
 
-## 1.0.1 (unreleased)
+## 1.0.1 (2026-10-14)
 
 - New Event triggers once per fixture, when it is first listed. It used to trigger again when the API gave a fixture
   a new event id (as an exchange listed it, often in the last hours before kick-off) or listed it under a second
