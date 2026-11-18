@@ -1,17 +1,17 @@
 'use strict';
 
 const { spend, eventName, list } = require('../lib/oddsrelay');
-const { sportChoices, eventChoices, venueChoices, marketChoices, maxTokens } = require('../lib/fields');
+const { sportChoices, eventChoices, venueChoices, marketChoices, maxTokens, region } = require('../lib/fields');
 
 // ponytail: at most 1,000 prices per event in one result; the rest are counted. Pick bookmakers or markets to narrow.
 const MAX_PRICES = 1000;
 
 const perform = async (z, bundle) => {
-  const { event: id, max_tokens: max } = bundle.inputData;
+  const { event: id, max_tokens: max, region } = bundle.inputData;
   const [bookmakers, markets] = [list(bundle.inputData.bookmakers), list(bundle.inputData.markets)];
   let event;
   try {
-    event = await spend(z, `/v2/odds/event/${encodeURIComponent(id)}`, {}, Number(max));
+    event = await spend(z, `/v2/odds/event/${encodeURIComponent(id)}`, { region }, Number(max));
   } catch (err) {
     if (err.httpStatus === 404) return []; // the event is not on the feed (any more)
     throw err;
@@ -72,6 +72,7 @@ module.exports = {
   },
   operation: {
     inputFields: [
+      region,
       {
         key: 'sport',
         label: 'Sport or competition',

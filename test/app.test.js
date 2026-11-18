@@ -205,9 +205,9 @@ const venues = () => {
 test('New Board Row prices the board first, then turns it into one row per bookmaker price', async () => {
   api()
     .get('/v2/odds/standard')
-    .query({ sports: 'tennis', bookmakers: 'william_hill', quote: 'true' })
+    .query({ region: 'uk', sports: 'tennis', bookmakers: 'william_hill', quote: 'true' })
     .reply(200, { ...fixture('quote'), cost: 12 });
-  api().get('/v2/odds/standard').query({ sports: 'tennis', bookmakers: 'william_hill' }).reply(200, fixture('odds-standard'));
+  api().get('/v2/odds/standard').query({ region: 'uk', sports: 'tennis', bookmakers: 'william_hill' }).reply(200, fixture('odds-standard'));
   api().get('/v2/bookmakers').reply(200, venues());
 
   const rows = await appTester(App.triggers.new_board_row.operation.perform, { authData, inputData: boardInput });
@@ -218,7 +218,7 @@ test('New Board Row prices the board first, then turns it into one row per bookm
 test('New Board Row stops before spending when the quote is above the limit', async () => {
   api()
     .get('/v2/odds/standard')
-    .query({ sports: 'tennis', bookmakers: 'william_hill', quote: 'true' })
+    .query({ region: 'uk', sports: 'tennis', bookmakers: 'william_hill', quote: 'true' })
     .reply(200, { ...fixture('quote'), cost: 540 });
   const err = await failure(
     appTester(App.triggers.new_board_row.operation.perform, { authData, inputData: boardInput }),
@@ -230,8 +230,8 @@ test('New Board Row stops before spending when the quote is above the limit', as
 
 test('each-way rows carry the place terms and both lays; dutching rows carry the dutch group', async () => {
   for (const [type, file] of [['each-way', 'odds-each-way'], ['dutching', 'odds-dutching']]) {
-    api().get(`/v2/odds/${type}`).query({ quote: 'true' }).reply(200, fixture('quote'));
-    api().get(`/v2/odds/${type}`).reply(200, fixture(file));
+    api().get(`/v2/odds/${type}`).query({ region: 'uk', quote: 'true' }).reply(200, fixture('quote'));
+    api().get(`/v2/odds/${type}`).query({ region: 'uk' }).reply(200, fixture(file));
     api().get('/v2/bookmakers').reply(200, venues());
   }
   const ew = await appTester(App.triggers.new_board_row.operation.perform, {
@@ -260,8 +260,8 @@ test('each-way rows carry the place terms and both lays; dutching rows carry the
 });
 
 test('Find Board returns the board as line items, cut to the row limit', async () => {
-  api().get('/v2/odds/each-way').query({ quote: 'true' }).reply(200, fixture('quote'));
-  api().get('/v2/odds/each-way').reply(200, fixture('odds-each-way'));
+  api().get('/v2/odds/each-way').query({ region: 'uk', quote: 'true' }).reply(200, fixture('quote'));
+  api().get('/v2/odds/each-way').query({ region: 'uk' }).reply(200, fixture('odds-each-way'));
   api().get('/v2/bookmakers').reply(200, venues());
   const [board] = await appTester(App.searches.find_board.operation.perform, {
     authData,
@@ -271,8 +271,8 @@ test('Find Board returns the board as line items, cut to the row limit', async (
   assert.equal(board.rows_not_shown, board.row_count - 1);
   assert.equal(board.board_time, '2026-09-17T02:20:28.456Z');
 
-  api().get('/v2/odds/bog').query({ quote: 'true' }).reply(200, fixture('quote'));
-  api().get('/v2/odds/bog').reply(200, { meta: fixture('odds-standard').meta, data: [] });
+  api().get('/v2/odds/bog').query({ region: 'uk', quote: 'true' }).reply(200, fixture('quote'));
+  api().get('/v2/odds/bog').query({ region: 'uk' }).reply(200, { meta: fixture('odds-standard').meta, data: [] });
   api().get('/v2/bookmakers').reply(200, venues());
   const none = await appTester(App.searches.find_board.operation.perform, {
     authData,
@@ -367,6 +367,31 @@ test('the sport dropdown lists each sport, then competitions a page at a time', 
   const next = await appTester(sportChoices, { authData, inputData: {}, meta: { paging_token: 'abc' } });
   assert.equal(next.paging_token, null);
   assert.equal(next.results.length, sports.data.length);
+});
+
+test('a Region is sent on the steps that take one, and the lists follow it', async () => {
+  const { region, regionChoices, venueChoices } = require('../lib/fields');
+  for (const key of ['new_event', 'find_event_odds', 'find_coverage']) {
+    const fields = (App.triggers[key] || App.searches[key]).operation.inputFields;
+    assert.ok(fields.includes(region) && !region.required, key);
+  }
+  for (const key of ['new_board_row', 'find_board']) {
+    const fields = (App.triggers[key] || App.searches[key]).operation.inputFields;
+    assert.ok(!fields.some((f) => f.key === 'region'), `${key}: the matched boards are uk only`);
+  }
+  api().get('/v2/regions').reply(200, { regions: [{ code: 'uk', name: 'UK & Ireland', requestable: true }, { code: 'us', name: 'United States', requestable: true }, { code: 'xx', name: 'Dark', requestable: false }] });
+  const regions = await appTester(regionChoices, { authData, inputData: {}, meta: {} });
+  assert.deepEqual(regions.results.map((r) => r.id), ['uk', 'us']);
+
+  api().get('/v2/bookmakers').query({ region: 'us' }).reply(200, venues());
+  await appTester(venueChoices(), { authData, inputData: { region: 'us' }, meta: {} });
+  api().get('/v2/events').query({ sport: 'basketball', region: 'us' }).reply(200, { meta: { next_cursor: null }, data: [] });
+  assert.deepEqual(await appTester(App.triggers.new_event.operation.perform, { authData, inputData: { sport: 'basketball', region: 'us' } }), []);
+  api().get('/v2/odds/event/or_evt_x').query({ region: 'us', quote: 'true' }).reply(200, fixture('quote'));
+  api().get('/v2/odds/event/or_evt_x').query({ region: 'us' }).reply(200, fixture('event'));
+  await appTester(App.searches.find_event_odds.operation.perform, { authData, inputData: { sport: 'basketball', event: 'or_evt_x', region: 'us', max_tokens: 25 } });
+  api().get('/v2/coverage').query({ region: 'us' }).reply(200, fixture('coverage-keyed'));
+  await appTester(App.searches.find_coverage.operation.perform, { authData, inputData: { feed_type: 'raw', region: 'us' } });
 });
 
 test('the market dropdown reads coverage without the key; the feed type dropdown follows the key', async () => {

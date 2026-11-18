@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Regions: New Event, Find Event Odds and Find Coverage take an optional Region (the regions the key can ask for),
+  and their sport, event, bookmaker and market lists follow it. It sits first in those steps, above the required
+  fields, because the lists below depend on it.
+- New Board Row and Find Board name `region=uk` on every request: the matched boards are served for the UK & Ireland
+  only, and an account whose home region is another one is refused when no region is sent.
+- README and listing texts no longer say "pre-match" or UK only. No raw board step and no in-play field yet.
+
 ## 1.0.2 (unreleased)
 
 - New Event's duplicate check reads the event id again, and the "Fixture key" field is gone. Since 14 Oct 2026 an

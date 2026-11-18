@@ -1,7 +1,7 @@
 # OddsRelay for Zapier
 
-The OddsRelay integration for Zapier: pre-match odds for UK and Irish bookmakers, with Betfair, Smarkets and
-Matchbook lay prices, in your Zaps. Start a Zap when a new event is listed or a new row appears on a
+The OddsRelay integration for Zapier: odds from UK and Irish bookmakers, with Betfair, Smarkets and
+Matchbook lay prices, in your Zaps, and events and single-event prices from 20 more regions. Start a Zap when a new event is listed or a new row appears on a
 matched board, and look up a board, one event's prices, coverage or your token balance as a step.
 
 API docs: https://oddsrelay.io/docs
@@ -33,6 +33,13 @@ against your usage record, which costs no tokens, and names the connection after
 
 The feed types are Standard, Each-way, Extra place, Best odds guaranteed (BOG), Dutching and 2Up. Each dropdown
 lists only the feed types your key can use. Find Event Odds needs a plan that includes raw odds.
+
+## Regions
+
+New Event, Find Event Odds and Find Coverage take an optional **Region**, and their sport, event and bookmaker
+lists follow it. Left empty, they read the UK & Ireland. New Board Row and Find Board always read the UK & Ireland:
+the matched boards are served for that region only, and other regions carry raw odds. This integration has no step
+for the whole raw board yet.
 
 ## Tokens
 

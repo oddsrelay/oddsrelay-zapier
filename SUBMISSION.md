@@ -10,14 +10,14 @@ Re-read the publishing requirements on the day you submit: forms change.
 | Field | Value |
 |---|---|
 | Title | OddsRelay |
-| Description | OddsRelay is a pre-match odds API for UK and Irish bookmakers, with exchange lay prices beside bookmaker back prices. |
+| Description | OddsRelay is an odds API: UK and Irish bookmaker back prices beside exchange lay prices, and raw odds from more regions. |
 | Homepage URL | https://oddsrelay.io |
 | Category | Developer Tools (`developer-tools`) |
 | Intended audience | Public (`global`) |
 | Your role | Employee (`employee`) |
 | Logo | `logo.png` in this folder: 512 x 512 PNG, RGBA, transparent background, the mark without the wordmark |
 
-The description is 117 characters, starts "OddsRelay is a", names no other app and says nothing about syncing (Zapier's
+The description is 120 characters, starts "OddsRelay is a", names no other app and says nothing about syncing (Zapier's
 check M002 wants 40 to 140 characters in that form). The logo meets check M004 (square PNG, at least 256 x 256,
 RGBA with transparency).
 
@@ -25,7 +25,7 @@ RGBA with transparency).
 
 For any field that asks for more than the one line:
 
-> OddsRelay is a pre-match odds API for UK and Irish bookmakers. It serves six feed types of matched odds
+> OddsRelay is an odds API for bookmakers in the UK & Ireland and 20 more regions. For the UK & Ireland it serves six feed types of matched odds
 > (Standard, Each-way, Extra place, Best odds guaranteed, Dutching and 2Up), which put each bookmaker back price
 > beside exchange lay prices, and every price for a single event. With this integration you can start a Zap when a
 > new event is listed or a new row appears on a board, and look up a board, one event's prices, coverage or your

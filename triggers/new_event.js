@@ -1,18 +1,18 @@
 'use strict';
 
 const { FEED_TYPES, boardKey, get, eventName, latestFirst } = require('../lib/oddsrelay');
-const { sportChoices, feedTypeChoices } = require('../lib/fields');
+const { sportChoices, feedTypeChoices, region } = require('../lib/fields');
 
 // ponytail: reads every page up to 40 (10,000 events; soccer, the largest sport, had 1,794 on 14 Oct 2026, at about
 // 0.1 s a page) and stops with an error beyond that: a partial list lets old events in as earlier ones start.
 const MAX_PAGES = 40;
 
 const perform = async (z, bundle) => {
-  const { sport, feed_type: feedType } = bundle.inputData;
+  const { sport, feed_type: feedType, region } = bundle.inputData;
   const events = [];
   let cursor;
   for (let page = 0; page < MAX_PAGES; page++) {
-    const body = await get(z, '/v2/events', { sport, cursor });
+    const body = await get(z, '/v2/events', { sport, region, cursor });
     events.push(...body.data);
     cursor = body.meta.next_cursor;
     if (!cursor) break;
@@ -55,6 +55,7 @@ module.exports = {
   operation: {
     type: 'polling',
     inputFields: [
+      region,
       {
         key: 'sport',
         label: 'Sport or competition',
@@ -67,7 +68,7 @@ module.exports = {
       {
         key: 'feed_type',
         label: 'Feed type',
-        helpText: 'Only events on this matched board. Leave empty for every event.',
+        helpText: 'Only events on this matched board (UK & Ireland only). Leave empty for every event.',
         choices: { perform: feedTypeChoices(false) },
       },
     ],

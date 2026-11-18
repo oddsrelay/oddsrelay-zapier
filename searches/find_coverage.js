@@ -1,11 +1,11 @@
 'use strict';
 
 const { get, venues } = require('../lib/oddsrelay');
-const { feedType, venueChoices, sportOnlyChoices } = require('../lib/fields');
+const { feedType, venueChoices, sportOnlyChoices, region } = require('../lib/fields');
 
 const perform = async (z, bundle) => {
-  const { feed_type: product, bookmaker, sport } = bundle.inputData;
-  const coverage = await get(z, '/v2/coverage');
+  const { feed_type: product, bookmaker, sport, region } = bundle.inputData;
+  const coverage = await get(z, '/v2/coverage', { region });
   const rows = [];
   for (const venue of venues(coverage.products?.[product])) {
     if (bookmaker && venue.key !== bookmaker) continue;
@@ -28,6 +28,7 @@ module.exports = {
   operation: {
     inputFields: [
       feedType(true),
+      region,
       {
         key: 'bookmaker',
         label: 'Bookmaker or exchange',
